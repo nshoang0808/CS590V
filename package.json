@@ -1,0 +1,11 @@
+{
+  "name": "CS590V",
+  "version": "0.0.1",
+  "scripts": {
+    "serve": "./node_modules/.bin/http-server -c-1"
+  },
+  "author": "HoangNguyen",
+  "devDependencies": {
+    "http-server": "^0.9.0"
+  }
+}
