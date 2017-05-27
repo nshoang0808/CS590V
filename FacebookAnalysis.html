@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<style>
+  /*.bar {fill: lightgreen;}*/
+</style>
+<head>
+    <title>ALL Statistic and Visualizations of Facebook data </title>
+    <meta charset="utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript" src="node_modules/dc/web/js/crossfilter.js"></script>
+    <script type="text/javascript" src="node_modules/dc/web/js/dc.js"></script>
+    <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" type="text/css" href="node_modules/dc/web/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="node_modules/dc/web/css/dc.css"/>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style>
+        @import url('//fonts.googleapis.com/css?family=Lato:400,400italic,700,700italic');
+
+        body {
+            font-family: 'Lato', Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            position: relative;
+        }
+        .legend {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 60%;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 170px;
+            height: 15px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: Tan;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .bar text {
+            font-size: 1em;
+            font-weight: 300;
+            cursor: default;
+        }
+
+        .axis line {
+            stroke: #AAA;
+            stroke-width: 1;
+        }
+
+        .bar {
+            fill: DeepSkyBlue;
+        }
+
+            .bar:hover {
+                fill: #a1d99b;
+            }
+
+        .axisR {
+            font: 0.625em sans-serif;
+        }
+
+        .axisL {
+            font: 0.625em sans-serif;
+        }
+
+        .axis {
+            font: 0.625em sans-serif;
+        }
+
+        .axisR path,
+        .axisR line,
+        .axisL path,
+        .axisL line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        #graph .x.axis path {
+            display: none;
+        }
+
+        .linechart {
+
+        }
+
+        a {
+            color: dimgray;
+        }
+
+        .source {
+            font-size: 0.625em;
+            color: grey;
+            line-height: 80%;
+        }
+
+        .update {
+            font-size: 0.625em;
+            color: grey;
+            line-height: 80%;
+        }
+
+
+    </style>
+</head>
+<body>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <div class="container">
+      <form>
+          <span style="color:dimgrey" id="title">Day of week: </span>
+          <select id="weekday" style="width:150px;">
+              <option value='1'>Monday</option>
+              <option value='2'>Tuesday</option>
+              <option value='3'>Wednesday</option>
+              <option value='4'>Thursday</option>
+              <option value='5'>Friday</option>
+              <option value='6'>Saturday</option>
+              <option value='7'>Sunday</option>
+          </select>
+          <span style="color:dimgrey; margin-left:20px;" id="title2">Month in Year (for heatmap)</span>
+          <select id="month" style="width:200px;">
+              <option value='1'>January</option>
+              <option value='2'>February</option>
+              <option value='3'>March</option>
+              <option value='4'>April</option>
+              <option value='5'>May</option>
+              <option value='6'>June</option>
+              <option value='7'>July</option>
+              <option value='8'>August</option>
+              <option value='9'>September</option>
+              <option value='10'>October</option>
+              <option value='11'>November</option>
+              <option value='12'>December</option>
+          </select>
+      </form>
+    </div>
+      <div id="wrap" style="max-width:1500px;">
+          <div id="scatterplot1" style="width:600px; margin-left:20px;">
+            <h4> People liked your Facebook Page and see the post vs Likes For all Posts </h4>
+          </div>
+          <div id="scatterplot2" style="width:600px; margin-left:20px;">
+            <h4> People liked your Facebook Page and see the post vs Consumers Posts </h4>
+          </div>
+
+          <div id="graph" style="float: left; width:800px;margin:50px;"></div>
+          <div id="heatmap" style="margin-left: 45px;">
+            <h4> Total Facebook Interactions by hour and day of week</h4>
+          </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+        var getMonth = ["zero", "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+
+        var getWeek = ["zero", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        d3.select(self.frameElement).attr("height", "480px");
+
+        var div = d3.select("body").append("div").attr("class", "tooltip");
+
+            //Start the bar graph code
+
+        var margin = { top: 10, right: 50, bottom: 20, left: 50 },
+            width = 600 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
+
+        var x = d3.scale.ordinal()
+            .rangeRoundBands([0, width], .2);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var y2 = d3.scale.linear()
+            .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .ticks(6);
+
+        var y2Axis = d3.svg.axis()
+            .scale(y2)
+            .orient("right")
+            .ticks(6, "Post");
+
+
+        var svg = d3.select("#graph").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Scatter plot
+        var scatterchart1 = dc.scatterPlot("#scatterplot1");
+        var scatterchart2 = dc.scatterPlot("#scatterplot2");
+        d3.csv("dataset_Facebook-table.csv", function (error, data_original) {
+          data_original.forEach(function(d) {
+            d["like"] = +d["like"];
+            d["Lifetime People who have liked your Page and engaged with your post"] = +d["Lifetime People who have liked your Page and engaged with your post"];
+            d["Post Weekday"] = +d["Post Weekday"]
+            d["Lifetime Post Consumers"] = +d["Lifetime Post Consumers"];
+            d["Post Month"] = +d["Post Month"];
+            d["Post Hour"] = +d["Post Hour"];
+          });
+          d3.selectAll("#weekday")
+             .on("change", updateScatterplot);
+          d3.selectAll("#month")
+              .on("change", updateHeatmap);
+          function updateScatterplot() {
+
+              var I = document.getElementById('weekday').selectedIndex
+                  , select = document.getElementById('weekday')[I].value
+                  , data = data_original.filter(function (d) { return d["Post Weekday"] == select; });
+
+              var ndx = crossfilter(data),
+                  dim1 = ndx.dimension(function (d) {
+                      return [d["Lifetime People who have liked your Page and engaged with your post"], d["like"]];
+                  }),
+                  group1 = dim1.group(),
+                  xmax1 = d3.max(data, function(d) { return d["Lifetime People who have liked your Page and engaged with your post"]; }),
+                  ymax1 = d3.max(data, function(d) { return d["like"]; }),
+                  dim2 = ndx.dimension(function (d) {
+                      return [d["Lifetime People who have liked your Page and engaged with your post"], d["Lifetime Post Consumers"]];
+                  }),
+                  group2 = dim2.group(),
+                  xmax2 = d3.max(data, function(d) { return d["Lifetime People who have liked your Page and engaged with your post"]; }),
+                  ymax2 = d3.max(data, function(d) { return d["Lifetime Post Consumers"]; });
+              scatterchart1.margins().left = 50;
+              scatterchart1.margins().right = 50;
+              scatterchart1.margins().bottom = 50;
+              scatterchart1.width(450)
+                  .height(400)
+                  .x(d3.scale.linear().domain([0, 1.1*xmax1]))
+                  .y(d3.scale.linear().domain([0, 1.1*ymax1]))
+                  .xAxisLabel("People liked your Page and engaged with your post")
+                  .yAxisLabel("like")
+                  .clipPadding(10)
+                  .dimension(dim1)
+                  .excludedOpacity(0.5)
+                  .group(group1);
+
+              scatterchart2.margins().left = 50;
+              scatterchart2.margins().bottom = 50;
+              scatterchart2.width(450)
+                  .height(400)
+                  .x(d3.scale.linear().domain([0, 1.1*xmax2]))
+                  .y(d3.scale.linear().domain([0, 1.1*ymax2]))
+                  .xAxisLabel("People liked your Page and engaged with your post")
+                  .yAxisLabel("Post Consumers")
+                  .clipPadding(10)
+                  .dimension(dim2)
+                  .excludedOpacity(0.5)
+                  .group(group2);
+                  updateBars();
+              dc.renderAll();
+          }
+          updateScatterplot();
+          // Add heatmap graph, based on month selected
+          function updateBars() {
+                // Filter to get data based on weekday
+                var I = document.getElementById('weekday').selectedIndex
+                    , select = document.getElementById('weekday')[I].value
+                    , data1 = data_original.filter(function (d) { return d["Post Weekday"] == select; })
+                var data = d3.nest()
+                  .key(function (d) {return d["Post Month"];} )
+                  .rollup(function (d) {
+                    return {
+                      engaged: d3.sum(d, function(g) { return g["Lifetime Engaged Users"]; }),
+                      reach: d3.sum(d, function(g) { return g["Lifetime Post Total Reach"]; })
+                    };
+                  }).entries(data1);
+                data.forEach(function(d) {
+                  d.month = d.key;
+                  d.engaged = d.values.engaged;
+                  d.reach = d.values.reach;
+                });
+
+                  var max = 1.2 * d3.max(data, function (d) { return d.engaged; })
+                    , max2 = 1.2 * d3.max(data, function (d) { return d.reach; })
+                    , line = d3.svg.line()
+                      .x(function (d) { return x(d.month); })
+                      .y(function (d) { return y2(d.reach); })
+                    , bisectMonth = d3.bisector(function(d) { return d.month; }).left;
+
+                  x.domain(data.map(function (d) { return d.month; }));
+                  y.domain([0, max]);
+                  y2.domain([0, max2]);
+                  //Sets the domain based on the average, making the max .11 times the average greater than the max value, for asthetics only essentually
+
+                  if (svg.selectAll(".x.axis")[0].length < 1) {//This stuff only occurs the first time the code is looped through, not subsiquent calls
+                      svg.append("g")
+                          .attr("class", "x axis")
+                          .attr("transform", "translate(0," + height + ")")
+                          .call(xAxis)
+                          .append("text")
+                          .attr("x", width)
+                          .attr("y", 20)
+                          .style("text-anchor", "start")
+                          .text("Month");
+
+                      svg.append('g')
+                          .attr("class", "y axisL")
+                          .call(yAxis)
+                        .append("text")
+                          .attr("transform", "rotate(-90)")
+                          .attr("y", 4)
+                          .attr("dy", ".71em")
+                          .style("text-anchor", "end")
+                          .text("Total Engaged Users");
+
+                      svg.append("g")
+                          .attr("class", "y axisR")
+                          .call(y2Axis)
+                          .attr("transform", "translate(" + width + ",0)")
+                        .append("text")
+                          .attr("transform", "rotate(-90)")
+                          .attr("y", -10)
+                          .attr("dy", ".71em")
+                          .style("text-anchor", "end")
+                          .text("Total Reach");
+
+                    //Add histogram to the graph
+                      svg.selectAll(".bar")
+                          .data(data)
+                        .enter()
+                          .append("rect")
+                          .attr("class", "bar")
+                          .attr("x", function (d) { return x(d.month); })
+                          .attr("width", x.rangeBand()+7)
+                          .attr("y", function (d) { return y(0); })
+                          .attr("height", function (d) { return y(0) })
+                          .on("mouseover", function(d) {
+                              div.transition()
+                                  .duration(200)
+                                  .style("opacity", .9);
+                              div	.html("Engaged:"+d.engaged + " Users")
+                                  .style("left", (d3.event.pageX) + "px")
+                                  .style("top", (d3.event.pageY - 28) + "px");
+                              })
+                          .on("mouseout", function(d) {
+                              div.transition()
+                                  .duration(500)
+                                  .style("opacity", 0);
+                          })
+                        .transition()
+                          .duration(1050)
+                          .attr("y", function (d) { return y(d.engaged); })
+                          .attr("height", function (d) { return height - y(d.engaged); });
+
+
+                  // Add line chart to the graph, displaying the total engaged users
+
+                      svg.append("path")
+                        .attr("class", "linechart")
+                        .attr("transform", "translate(" + 20 + ",0)")
+                        .attr("fill", "none")
+                        .attr("stroke", "slategray")
+                        .attr("stroke-linejoin", "round")
+                        .attr("stroke-linecap", "round")
+                        .attr("stroke-width", 1.5)
+                        .attr("d", line(data));
+
+                      svg.selectAll("dot")
+                          .data(data)
+                      .enter().append("circle")
+                          .attr("r", 4)
+                          .attr("cx", function(d) { return x(d.month) + 20; })
+                          .attr("cy", function(d) { return y2(d.reach); })
+                          .on("mouseover", function(d) {
+                              div.transition()
+                                  .duration(200)
+                                  .style("opacity", .9);
+                              div	.html("Reach:"+ d.reach + " Users")
+                                  .style("left", (d3.event.pageX) + "px")
+                                  .style("top", (d3.event.pageY - 28) + "px");
+                              })
+                          .on("mouseout", function(d) {
+                              div.transition()
+                                  .duration(500)
+                                  .style("opacity", 0);
+                          });
+
+
+                  } else {
+                      svg.selectAll(".y.axisL").transition().duration(1500).call(yAxis);
+                      svg.selectAll(".y.axisR").transition().duration(1500).call(y2Axis);
+
+                      svg.selectAll(".bar")
+                          .data(data)
+                      .transition()
+                          .duration(1000)
+                          .attr("y", function (d) { return y(d.engaged); })
+                          .attr("height", function (d) { return height - y(d.engaged); });
+                      svg.selectAll(".linechart")
+                          .datum(data)
+                          .transition()
+                          .duration(1000)
+                          .attr("d", line(data));
+
+                      svg.selectAll("circle")
+                          .data(data)
+                          .transition()
+                          .duration(1000)
+                          .attr("cy", function(d) { return y2(d.reach); });
+                  };
+
+
+          };
+          updateBars();
+          var hmap = dc.heatMap("#heatmap");
+          function updateHeatmap() {
+            var I = document.getElementById('month').selectedIndex
+                , select = document.getElementById('month')[I].value
+                , data1 = data_original.filter(function (d) { return d["Post Month"] == select; });
+
+            var data = d3.nest()
+              .key(function(d) {return +d["Post Weekday"];})
+              .key(function(d) {return +d["Post Hour"];})
+              .rollup(function(d) {
+                return d3.sum(d, function(g) {return g["Total Interactions"];});
+              })
+              .entries(data1);
+            var data_x = [];
+
+            data.forEach(function(d) {
+              d.values.forEach(function(g) {
+                data_x.push({"hour": g.key, "weekday": +d.key, "interaction": g.values})
+              });
+            })
+
+            // console.log();
+            var ndx    = crossfilter(data_x),
+                runDim = ndx.dimension(function(d) { return [d["hour"], -d["weekday"]]; }),
+                runGroup = runDim.group().reduceSum(function(d) { return +d["interaction"]; });
+
+            hmap.margins().left = 70;
+            hmap
+              .width(45 * 20 + 80)
+              .height(45 * 5 + 40)
+              .dimension(runDim)
+              // .label(function(d) {return d.key;})
+              // .yAxisLabel("Day of week")
+              .group(runGroup)
+              .keyAccessor(function(d) { return +d.key[0]; })
+              .valueAccessor(function(d) { return +d.key[1]; })
+              .colorAccessor(function(d) { return +d.value; })
+              .rowsLabel(function(d) {
+                return getWeek[-d];
+              })
+              .colsLabel(function(d) {
+                return d+":00";
+              })
+              .title(function(d) {
+                  return "Total Interactions: " +d.value})
+              .colors(["#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"])
+              .calculateColorDomain();
+
+            hmap.render();
+          }
+          updateHeatmap();
+
+          svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", 0)
+            .attr("text-anchor", "middle")
+            .style("font-size", "14px")
+            .style("text-decoration", "underline")
+            .style("font-weight", "bold")
+            .text("Total Reach and Engaged Users over a year base on each day of week.");
+        });
+
+
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<style>
+  /*.bar {fill: lightgreen;}*/
+</style>
+<head>
+    <title>ALL Statistic and Visualizations of Facebook data </title>
+    <meta charset="utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript" src="node_modules/dc/web/js/crossfilter.js"></script>
+    <script type="text/javascript" src="node_modules/dc/web/js/dc.js"></script>
+    <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" type="text/css" href="node_modules/dc/web/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="node_modules/dc/web/css/dc.css"/>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style>
+        @import url('//fonts.googleapis.com/css?family=Lato:400,400italic,700,700italic');
+
+        body {
+            font-family: 'Lato', Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            position: relative;
+        }
+        .legend {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 60%;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 170px;
+            height: 15px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: Tan;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .bar text {
+            font-size: 1em;
+            font-weight: 300;
+            cursor: default;
+        }
+
+        .axis line {
+            stroke: #AAA;
+            stroke-width: 1;
+        }
+
+        .bar {
+            fill: DeepSkyBlue;
+        }
+
+            .bar:hover {
+                fill: #a1d99b;
+            }
+
+        .axisR {
+            font: 0.625em sans-serif;
+        }
+
+        .axisL {
+            font: 0.625em sans-serif;
+        }
+
+        .axis {
+            font: 0.625em sans-serif;
+        }
+
+        .axisR path,
+        .axisR line,
+        .axisL path,
+        .axisL line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+/*
+        #graph .x.axis path {
+            display: none;
+        }*/
+
+        a {
+            color: dimgray;
+        }
+        #title {
+          font-size: 30px;
+          margin-top: 10px;
+          text-align: center;
+          margin-bottom: 20px;
+          color: peru;
+        }
+
+
+    </style>
+</head>
+<body>
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+  <div id="title">
+    United States Pollution Comparision in 2016
+  </div>
+  <div class="container" style="margin-left: 10px;">
+    <form style="margin-bottom:10px;">
+        <span style="color:dimgrey">First state: </span>
+        <select id="state1" class="state" style="width:170px;" size=1>
+          <option value='Arizona'>Arizona</option>
+          <option value='Arkansas'>Arkansas</option>
+          <option value='California'>California</option>
+          <option value='Colorado'>Colorado</option>
+          <option value='Delaware'>Delaware</option>
+          <option value='Florida'>Florida</option>
+          <option value='Illinois'>Illinois</option>
+          <option value='Iowa'>Iowa</option>
+          <option value='Louisiana'>Louisiana</option>
+          <option value='Maryland'>Maryland</option>
+          <option value='Massachusetts'>Massachusetts</option>
+          <option value='New Hampshire'>New Hampshire</option>
+          <option value='New York'>New York</option>
+          <option value='North Carolina'>North Carolina</option>
+          <option value='North Dakota'>North Dakota</option>
+          <option value='Ohio'>Ohio</option>
+          <option value='Oklahoma'>Oklahoma</option>
+          <option value='Pennsylvania'>Pennsylvania</option>
+          <option value='South Carolina'>South Carolina</option>
+          <option value='Tennessee'>Tennessee</option>
+          <option value='Texas'>Texas</option>
+          <option value='Virginia'>Virginia</option>
+          <option value='Washington'>Washington</option>
+          <option value='Wyoming'>Wyoming</option>
+        </select>
+    </form>
+    <form style="margin-bottom:10px;">
+        <span style="color:dimgrey">Second state: </span>
+        <select id="state2" class="state" style="width:170px;" size=1>
+          <option value='Arizona'>Arizona</option>
+          <option value='Arkansas'>Arkansas</option>
+          <option value='California'>California</option>
+          <option value='Colorado'>Colorado</option>
+          <option value='Delaware'>Delaware</option>
+          <option value='Florida'>Florida</option>
+          <option value='Illinois'>Illinois</option>
+          <option value='Iowa'>Iowa</option>
+          <option value='Louisiana'>Louisiana</option>
+          <option value='Maryland'>Maryland</option>
+          <option value='Massachusetts'>Massachusetts</option>
+          <option value='New Hampshire'>New Hampshire</option>
+          <option value='New York'>New York</option>
+          <option value='North Carolina'>North Carolina</option>
+          <option value='North Dakota'>North Dakota</option>
+          <option value='Ohio'>Ohio</option>
+          <option value='Oklahoma'>Oklahoma</option>
+          <option value='Pennsylvania'>Pennsylvania</option>
+          <option value='South Carolina'>South Carolina</option>
+          <option value='Tennessee'>Tennessee</option>
+          <option value='Texas'>Texas</option>
+          <option value='Virginia'>Virginia</option>
+          <option value='Washington'>Washington</option>
+          <option value='Wyoming'>Wyoming</option>
+        </select>
+    </form>
+    <form style="margin-bottom:10px;">
+        <span  style="color:dimgrey">Measurement: </span>
+        <select id="substance" style="width:150px;" size=1>
+            <option value='NO2'>NO2</option>
+            <option value='O3'>O3</option>
+            <option value='SO2'>SO2</option>
+            <option value='CO'>CO</option>
+        </select>
+    </form>
+  </div>
+  <div style="max-width:1500px;">
+    <div id="graph1" style="float:left;">
+      <h4 style="text-align:center;"> Air Quality Index For the first state in Comparison in 2016</h4>
+    </div>
+    <div id="graph2" style="float:right;">
+      <h4 style="text-align:center;"> Air Quality Index For the second state in Comparison in 2016</h4>
+    </div>
+  </div>
+  <div id="comment" style="text-align:center;">
+  </div>
+  <script>
+    d3.select(self.frameElement).attr("height", "480px");
+
+    var div = d3.select("body").append("div").attr("class", "tooltip");
+
+    var margin = { top: 10, right: 50, bottom: 20, left: 50 },
+        width = 600 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+
+    var x = d3.scale.ordinal()
+        .rangeRoundBands([0, width], .2);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(6);
+
+    var svg = d3.select("#graph1").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var svg2 = d3.select("#graph2").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    d3.csv("uspollution.csv", function (error, data_original) {
+      data_original.forEach(function(d) {
+        d["like"] = +d["like"];
+        d["NO2"] = +d["NO2 AQI"];
+        d["O3"] = +d["O3 AQI"];
+        d["SO2"] = +d["SO2 AQI"];
+        d["CO"] = +d["CO AQI"];
+      });
+      d3.selectAll(".state")
+         .on("change", updateLines);
+      d3.selectAll("#substance")
+         .on("change", updateLines);
+      function updateLines() {
+        var I = document.getElementById('state1').selectedIndex
+            , select = document.getElementById('state1')[I].value
+            , subs = document.getElementById('substance').value
+            , data1 = data_original.filter(function (d) { return d["State"] == select; });
+        var data = d3.nest()
+          .key(function (d) {return +d["Date Local"].split("-")[1];} )     // Key is month
+          .rollup(function (d) {
+            return {
+              substance: d3.mean(d, function(g) { return g[subs];})
+            };
+          }).entries(data1);
+        data.forEach(function(d) {
+          d.month = d.key;
+          d.substance = d.values.substance;
+        });
+
+          var max = 1.2 * d3.max(data, function (d) { return d.substance; })
+            , line = d3.svg.line()
+              .x(function (d) { return x(d.month); })
+              .y(function (d) { return y(d.substance); });
+
+          x.domain(data.map(function (d) { return d.month; }));
+          y.domain([0, max]);
+          //Sets the domain based on the average, making the max .11 times the average greater than the max value, for asthetics only essentually
+
+          if (svg.selectAll(".x.axis")[0].length < 1) {//This stuff only occurs the first time the code is looped through, not subsiquent calls
+              svg.append("g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate(0," + height + ")")
+                  .call(xAxis)
+                  .append("text")
+                  .attr("x", width)
+                  .attr("y", 20)
+                  .style("text-anchor", "start")
+                  .text("month");
+
+              svg.append('g')
+                  .attr("class", "y axisL")
+                  .call(yAxis)
+                .append("text")
+                  .attr("transform", "rotate(-90)")
+                  .attr("y", 4)
+                  .attr("dy", ".71em")
+                  .style("text-anchor", "end")
+                  .text("Air Quality Index");
+
+              svg.append("path")
+                .attr("class", "linechart")
+                .attr("transform", "translate(" + 50 + ",0)")
+                .attr("fill", "none")
+                .attr("stroke", "slategray")
+                .attr("stroke-linejoin", "round")
+                .attr("stroke-linecap", "round")
+                .attr("stroke-width", 1.5)
+                .attr("d", line(data));
+          } else {
+              svg.selectAll(".y.axisL").transition().duration(1500).call(yAxis);
+              svg.selectAll(".x.axis").transition().duration(1500).call(xAxis);
+
+              svg.selectAll(".linechart")
+                  .datum(data)
+                  .transition()
+                  .duration(1000)
+                  .attr("d", line);
+          };
+
+
+          var J = document.getElementById('state2').selectedIndex
+              , select2 = document.getElementById('state2')[J].value
+              , data3 = data_original.filter(function (d) { return d["State"] == select2; });
+          var data2 = d3.nest()
+            .key(function (d) {return +d["Date Local"].split("-")[1];} )     // Key is month
+            .rollup(function (d) {
+              return {
+                substance: d3.mean(d, function(g) { return g[subs];})
+              };
+            }).entries(data3);
+          data2.forEach(function(d) {
+            d.month = d.key;
+            d.substance = d.values.substance;
+          });
+
+            var max2 = 1.2 * d3.max(data2, function (d) { return d.substance; });
+
+            x.domain(data2.map(function (d) { return d.month; }));
+            y.domain([0, max2]);
+            //Sets the domain based on the average, making the max .11 times the average greater than the max value, for asthetics only essentually
+
+            if (svg2.selectAll(".x.axis")[0].length < 1) {//This stuff only occurs the first time the code is looped through, not subsiquent calls
+                svg2.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis)
+                    .append("text")
+                    .attr("x", width)
+                    .attr("y", 20)
+                    .style("text-anchor", "start")
+                    .text("month");
+
+                svg2.append('g')
+                    .attr("class", "y axisL")
+                    .call(yAxis)
+                  .append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 4)
+                    .attr("dy", ".71em")
+                    .style("text-anchor", "end")
+                    .text("Air Quality Index");
+
+                svg2.append("path")
+                  .attr("class", "linechart")
+                  .attr("transform", "translate(" + 50 + ",0)")
+                  .attr("fill", "none")
+                  .attr("stroke", "red")
+                  .attr("stroke-linejoin", "round")
+                  .attr("stroke-linecap", "round")
+                  .attr("stroke-width", 1.5)
+                  .attr("d", line(data2));
+            } else {
+                svg2.selectAll(".y.axisL").transition().duration(1500).call(yAxis);
+                svg2.selectAll(".x.axis").transition().duration(1500).call(xAxis);
+
+                svg2.selectAll(".linechart")
+                    .datum(data2)
+                    .transition()
+                    .duration(1000)
+                    .attr("d", line);
+            };
+            var x1 = d3.mean(data, function(d) {return d.substance;}),
+                x2 = d3.mean(data2, function(d) {return d.substance;});
+            if (x1>x2) {
+              document.getElementById('comment').innerHTML = select+" has cleaner air in terms of less" +subs +" substance than "+select2;
+            } else if (x1<x2){
+              document.getElementById('comment').innerHTML = select2+" has cleaner air in terms of less" +subs +" substance than "+select;
+            } else {
+              document.getElementById('comment').innerHTML = "Both states has the same air quality, or it is the same state!";
+            }
+      };
+      updateLines();
+    });
+  </script>
+</body>
